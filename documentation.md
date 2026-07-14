@@ -8,14 +8,8 @@ This project automates both halves of that process. It uses an AI agent to scree
 
 ## 2. Architecture
 
-```
-Google Form → Webhook → AI Agent (screen + score) → Gmail (approval request to recruiter)
-                                                              ↓
-                                          Switch: Approved / Reject / No Update
-                                                              ├─ Approved  → Sheets lookup → Dedup check → Calendly link email → Telegram (internal) → Sheets (Done)
-                                                              ├─ Reject    → Sheets lookup → Dedup check → Rejection email    → Telegram (internal) → Sheets (Done)
-                                                              └─ No Update → Telegram alert → 2nd approval request (48h) → escalation email
-```
+<img width="1326" height="612" alt="image" src="https://github.com/user-attachments/assets/2458ca6e-9b22-47ef-9807-af804721fa89" />
+
 
 **Flow breakdown:**
 

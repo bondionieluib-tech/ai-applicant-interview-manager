@@ -1,0 +1,1198 @@
+{
+  "name": "AI Automated Applicant Interview Manager",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "appointment-form",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -3280,
+        -560
+      ],
+      "id": "8638a98f-2812-4d0e-a4a5-6bb054b930e5",
+      "name": "Wait for Form Submission",
+      "webhookId": "d46ce30e-da0e-435b-95db-c07a9a76cefe"
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "youremail@email.com",
+        "subject": "Applicant Approval Required",
+        "message": "=Applicant Name: {{ $json.output.applicantName }}<br>\nScore: {{ $json.output.score }}/10<br>\nRecommendation Reason: {{ $json.output.recommendationReason }}<br>\nClassification: {{ $json.output.classification }}<br>\nResume: <a href=\"{{ $json.output.resumeLink }}\">View Resume</a><br>\n<br>\nPlease review and approve or reject this applicant.",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double",
+            "approveLabel": "Approve Applicant",
+            "disapproveLabel": "Decline Applicant"
+          }
+        },
+        "options": {
+          "limitWaitTime": {
+            "values": {
+              "resumeUnit": "minutes"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -2624,
+        -560
+      ],
+      "id": "e2f56437-1880-405e-8ea6-6c727b5b5faa",
+      "name": "Send Approval for Applicant",
+      "webhookId": "3cb014b7-f2c7-4089-a72d-376f534b3771",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PZJCGMxRoGUNWa9a",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Send Approval for Applicant').isExecuted ? $('Send Approval for Applicant').item.json.data.approved : null }}",
+                    "rightValue": "true",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "c43265ae-3084-4db4-b4b3-5059f9089c60"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "a2851ffc-8898-46ee-be71-1506d1c8153a",
+                    "leftValue": "={{ $('Send Approval for Applicant').isExecuted ? $('Send Approval for Applicant').item.json.data.approved : null }}",
+                    "rightValue": "false",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "b2e55cd2-369d-435c-b1c6-069698ccba7a",
+                    "leftValue": "={{ $('Send another approval message').isExecuted ? $('Send another approval message').item.json.data.approved : null }}",
+                    "rightValue": "true",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "f7f0ffb0-9792-4af3-9b5e-996dd3b0ebcc",
+                    "leftValue": "={{ $('Send another approval message').isExecuted ? $('Send another approval message').item.json.data.approved : null }}",
+                    "rightValue": "false",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -1808,
+        -720
+      ],
+      "id": "b9cd0d9e-4e6d-4563-a99c-bf76cc937389",
+      "name": "Check if Applicant is Approved/Rejected/NoUpdate"
+    },
+    {
+      "parameters": {
+        "chatId": "CHAT_ID_HERE",
+        "text": "={{ $('Send calendar link to applicant').isExecuted ? \"Applicant \" + $('Check if Applicant is Approved/Rejected/NoUpdate').item.json['Full Name'] + \" has been invited to the interview. Kindly check google sheets for logged details. Thank you.\" : \"Applicant \" + $('Check if Applicant is Approved/Rejected/NoUpdate').item.json['Full Name'] + \" has been rejected and has been sent an email regarding the update. Kindly check google sheets for logged details. Thank you.\" }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1360,
+        -736
+      ],
+      "id": "339900e5-5f26-427f-bd8a-cfe927ad04ae",
+      "name": "Send message to team for confirmation of appointment",
+      "webhookId": "11267117-06ac-44c6-a809-41b000589c23",
+      "credentials": {
+        "telegramApi": {
+          "id": "nCoJnAfO1Zuz6w33",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "125i7X9rRsZj5aChQf7bSDuGpXDoIpI05zXW4qbDMr1A",
+          "mode": "list",
+          "cachedResultName": "Employee Interview Process",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/125i7X9rRsZj5aChQf7bSDuGpXDoIpI05zXW4qbDMr1A/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 804635778,
+          "mode": "list",
+          "cachedResultName": "Form Responses 5",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/125i7X9rRsZj5aChQf7bSDuGpXDoIpI05zXW4qbDMr1A/edit#gid=804635778"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Full Name": "={{ $('Get applicant details1').item.json['Full Name'] }}",
+            "Confirmation": "Done",
+            "Status": "={{  $('Send calendar link to applicant').isExecuted ? 'Approved' : \"Rejected\" }}"
+          },
+          "matchingColumns": [
+            "Full Name"
+          ],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Address (City, State, and Country)",
+              "displayName": "Address (City, State, and Country)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "APPROVED",
+              "displayName": "APPROVED",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "MEETING PLATFORM",
+              "displayName": "MEETING PLATFORM",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Start Time",
+              "displayName": "Start Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "End Time",
+              "displayName": "End Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "TIMEZONE(IANA)",
+              "displayName": "TIMEZONE(IANA)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "TIMEZONE(ISO)",
+              "displayName": "TIMEZONE(ISO)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Confirmation",
+              "displayName": "Confirmation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1184,
+        -736
+      ],
+      "id": "ce346a3e-14b8-4328-b645-46732d3c051c",
+      "name": "Update applicant row to Done",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "deRwKT7kxLM0SIB9",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "CHAT_ID_HERE",
+        "text": "Applicant has no update. Kindly check on this. Thank you.",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -2256,
+        -432
+      ],
+      "id": "2e8c4fd4-bdcc-45f5-a660-dbb0d9b76082",
+      "name": "Send internal alert",
+      "webhookId": "a0dd1025-14cb-475c-bd71-7816df8819d3",
+      "credentials": {
+        "telegramApi": {
+          "id": "nCoJnAfO1Zuz6w33",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "youremail@email.com",
+        "subject": "Follow up on Approval",
+        "message": "No Update after 48hours. Will be escalating to Ops for further review. Thank you.",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double"
+          }
+        },
+        "options": {
+          "limitWaitTime": {
+            "values": {
+              "resumeUnit": "minutes"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -2032,
+        -432
+      ],
+      "id": "17c2f04b-31ca-40a8-8485-3dc869c2d87d",
+      "name": "Send another approval message",
+      "webhookId": "15d17647-653e-4e62-b4ce-e56062f4afc2",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PZJCGMxRoGUNWa9a",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "125i7X9rRsZj5aChQf7bSDuGpXDoIpI05zXW4qbDMr1A",
+          "mode": "list",
+          "cachedResultName": "Applicant Interview Manager",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/125i7X9rRsZj5aChQf7bSDuGpXDoIpI05zXW4qbDMr1A/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 804635778,
+          "mode": "list",
+          "cachedResultName": "Form Responses 5",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/125i7X9rRsZj5aChQf7bSDuGpXDoIpI05zXW4qbDMr1A/edit#gid=804635778"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -2256,
+        -688
+      ],
+      "id": "7432ed72-0dc0-4948-b7ae-85cb8cf36775",
+      "name": "Get applicant details1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "deRwKT7kxLM0SIB9",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cf755659-80ae-4ec4-ab3c-9ce7c7b05ee3",
+              "leftValue": "={{ $json.Confirmation }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2032,
+        -688
+      ],
+      "id": "17488fd8-495b-4b0d-8197-13611daeab3e",
+      "name": "Check if applicant is already processed1"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.Email }}",
+        "subject": "=Interview Schedule",
+        "message": "=Good day!  We are happy to announce that you have been selected for the interview process. Congratulations on your effort!  \n\nKindly schedule your desired interview schedule through this link: https://calendly.com/sample/new-meeting.\n\nPlease let us now once booking is already confirmed. Thank you.\n\nRegards, \n\nGlobo Team",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -1600,
+        -832
+      ],
+      "id": "65195611-856e-4255-b84f-9b725c8528d9",
+      "name": "Send calendar link to applicant",
+      "webhookId": "00d11451-c89f-40d9-b4a4-551610fe4f95",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PZJCGMxRoGUNWa9a",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.Email }}",
+        "subject": "Application Update",
+        "message": "We're sorry but you were not selected for this position right now.\n\nYou can also check our website for more open positions. Thank you for your interest in this role. \n\nRegards,\nBoogle\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -1600,
+        -624
+      ],
+      "id": "e9b1c49a-a08d-497a-8335-4ebd6ae69538",
+      "name": "Send rejection email to applicant",
+      "webhookId": "f9d409c0-b525-4250-baeb-5820ef9a8932",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PZJCGMxRoGUNWa9a",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "2107133e-e840-43e5-b45d-045388f1415e",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1808,
+        -432
+      ],
+      "id": "b79233d9-3882-44ee-b921-6f0a56505d28",
+      "name": "If no update after 48 hours"
+    },
+    {
+      "parameters": {
+        "sendTo": "youremail@email.com",
+        "subject": "No update after 48 hours.",
+        "message": "This is to inform you that there were no updates for the applicant!",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -1600,
+        -448
+      ],
+      "id": "aac7bbb1-f128-4a7d-b107-3b0f5b1e5229",
+      "name": "Escalate to Higher Ups",
+      "webhookId": "d0b70e20-3534-4859-8813-ade991bbbb9b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PZJCGMxRoGUNWa9a",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.data.approved }}",
+                    "rightValue": "true",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "60bb8c33-f5bc-414f-bcfe-0f34c4e1126f"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "eec2abd9-f219-4ee1-895b-c7d3ce6ba3fd",
+                    "leftValue": "={{ $json.data.approved }}",
+                    "rightValue": "false",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "3912cec6-c9f7-4c05-aac1-0a74e2899908",
+                    "leftValue": "={{ $json.data.approved }}",
+                    "rightValue": false,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "empty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {
+          "fallbackOutput": 2
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -2464,
+        -576
+      ],
+      "id": "7d115f8c-39c8-4ace-9d34-11db2e7cc983",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -2960,
+        -352
+      ],
+      "id": "c0f21df8-cd95-4789-a55f-dd95bcff310f",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "B42bAHVISobaas9c",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are an HR Assistant that screens job applicants for open roles.\n\nYour task is to evaluate the applicant based on their stated skills,\nyears of experience, and their reason for applying — using only the\ninformation provided in the applicant details below. Do not evaluate\nor reference the resume file itself; it will be reviewed separately\nby the recruiter.\n\nScore the applicant from 1-10 (10 = highest), weighted roughly as:\n- Relevant experience match: 40%\n- Skills match to requirements: 40%\n- Quality/relevance of their stated interest: 20%\n\nThen classify them as one of: \"Strong Match\", \"Good Match\", or\n\"Do Not Match\".\n\nProvide a 1-2 sentence reason explaining the score and classification,\nreferencing specific details from their application.\n\n---\nOPEN ROLE: Administrative Assistant\nFull-time | On-site/Hybrid\n\nResponsibilities:\n- Manage calendars, schedule meetings, and coordinate appointments\n- Handle incoming calls, emails, and correspondence\n- Maintain and organize physical and digital filing systems\n- Prepare reports, memos, and other documents\n- Order office supplies and manage inventory\n- Assist with onboarding new employees and other HR-related tasks\n\nRequirements:\n- At least 1-2 years of administrative or clerical experience\n- Proficient in Microsoft Office / Google Workspace\n- Strong written and verbal communication skills\n- Ability to multitask and prioritize in a fast-paced environment\n- High school diploma required; Associate's or Bachelor's degree preferred\n\nNice to have:\n- Experience with scheduling tools (Calendly, Google Calendar)\n- Basic bookkeeping or data entry experience\n---\n\nAPPLICANT DETAILS:\nName: {{ $json.body['Full Name'] }}\nYears of Experience: {{ $json.body['Years of Experience'] }}\nSkills: {{ $json.body['Which of the following skills do you have?'] }}\nWhy Interested: {{ $json.body['Why are you interested in this role?'] }}\nResume Link: {{ $json.body['Resume/CV Upload'] }}\n\n---\nRespond in this exact JSON format only:\n{\n  \"applicantName\": \"\",\n  \"score\": 0,\n  \"recommendationReason\": \"\",\n  \"classification\": \"\",\n  \"resumeLink\": \"\"\n}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -2944,
+        -560
+      ],
+      "id": "d8b0b903-ab18-4bf8-bf0b-219215814f2c",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n\t\"type\": \"object\",\n\t\"properties\": {\n\t\t\"applicantName\": {\n\t\t\t\"type\": \"string\",\n            \"description\": \"applicant's name\"\n\t\t},\n\t\t\"score\": {\n\t\t\t\"type\": \"number\",\n            \"minimum\": 1,\n            \"maximum\": 10,\n\t\t\t\"description\": \"the applicant's qualification score\"\n\t\t},\n        \"recommendationReason\": {\n            \"type\": \"string\",\n            \"description\": \"reason for recommendation\"\n        },\n        \"classification\": {\n            \"type\": \"string\",\n            \"enum\": [\"Strong Match\", \"Good Match\", \"Do not Match\"],\n            \"description\": \"the applicant's qualification\"\n        },\n        \"resumeLink\": {\n          \"type\": \"string\",\n          \"description\": \"link to the applicant's resume\"\n        }\n\t},\n  \"required\": [\"applicantName\", \"score\", \"recommendationReason\", \"classification\", \"resumeLink\"]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -2800,
+        -368
+      ],
+      "id": "acde83ff-461c-4ab3-9402-a5cd4031a203",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "149d91f1-88b9-4f90-8a17-53efbdbd24c7",
+              "name": "body['Resume/CV Upload']",
+              "value": "={{ 'https://drive.google.com/file/d/' + $json.body['Resume/CV Upload'][0] + '/view' }}",
+              "type": "string"
+            },
+            {
+              "id": "8c4db689-f76b-4dea-8fe8-f912ae143aff",
+              "name": "body['Full Name']",
+              "value": "={{ $json.body['Full Name'] }}",
+              "type": "string"
+            },
+            {
+              "id": "58a2856f-39d4-4fad-9b38-caf96be64210",
+              "name": "body.Email",
+              "value": "={{ $json.body.Email }}",
+              "type": "string"
+            },
+            {
+              "id": "7809e0e6-c801-47fd-b468-63c0e296d7b5",
+              "name": "body['Address (City, State, and Country)']",
+              "value": "={{ $json.body['Address (City, State, and Country)'] }}",
+              "type": "string"
+            },
+            {
+              "id": "955dc48c-2993-4beb-8f89-820e024c3815",
+              "name": "body['Position Applied For']",
+              "value": "={{ $json.body['Position Applied For'] }}",
+              "type": "string"
+            },
+            {
+              "id": "516f224e-e60d-40c8-9d1b-637b281b566d",
+              "name": "body['Why are you interested in this role?']",
+              "value": "={{ $json.body['Why are you interested in this role?'] }}",
+              "type": "string"
+            },
+            {
+              "id": "a28f177b-7acc-4423-937f-23382ef09172",
+              "name": "body['Years of Experience']",
+              "value": "={{ $json.body['Years of Experience'] }}",
+              "type": "string"
+            },
+            {
+              "id": "86749b03-9929-4044-a840-6c2cd27ce06a",
+              "name": "body['Recent Job Title']",
+              "value": "={{ $json.body['Recent Job Title'] }}",
+              "type": "string"
+            },
+            {
+              "id": "74985da6-1fc9-4cb4-9129-9517355e5163",
+              "name": "body['Highest Educational Level']",
+              "value": "={{ $json.body['Highest Educational Level'] }}",
+              "type": "string"
+            },
+            {
+              "id": "bafc64ff-58e4-4bf8-8c9d-0c7d6c873abe",
+              "name": "body['Availability to Start']",
+              "value": "={{ $json.body['Availability to Start'] }}",
+              "type": "string"
+            },
+            {
+              "id": "c8623d90-16a8-4d12-ba2b-29107b4500a7",
+              "name": "body['Expected Salary']",
+              "value": "={{ $json.body['Expected Salary'] }}",
+              "type": "string"
+            },
+            {
+              "id": "78989b32-235a-4797-8253-7fa1082aaa16",
+              "name": "body['How did you hear about this position?']",
+              "value": "={{ $json.body['How did you hear about this position?'] }}",
+              "type": "array"
+            },
+            {
+              "id": "18c21f90-e13f-43f8-aa25-859e0cdb591d",
+              "name": "body['Which of the following skills do you have?']",
+              "value": "={{ $json.body['Which of the following skills do you have?'] }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -3120,
+        -560
+      ],
+      "id": "2fca6b15-8b37-4313-8aca-4d1eb523305f",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {
+    "Wait for Form Submission": [
+      {
+        "json": {
+          "headers": {
+            "host": "syllabically-leverlike-dawn.ngrok-free.dev",
+            "user-agent": "Mozilla/5.0 (compatible; Google-Apps-Script; beanserver; +https://script.google.com; id: UAEmdDd-nmEW2e-CWN5qyU8t1SCpK5O3HoRk)",
+            "content-length": "850",
+            "accept-encoding": "gzip, deflate, br",
+            "content-type": "application/json",
+            "x-forwarded-for": "103.187.245.185, 107.178.193.5",
+            "x-forwarded-host": "syllabically-leverlike-dawn.ngrok-free.dev",
+            "x-forwarded-proto": "https"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "Full Name": "John Daniel",
+            "Email": "jd@gmail.com",
+            "Address (City, State, and Country)": "Bugo, Cagayan de Oro City",
+            "Position Applied For": "Administrative Assistant",
+            "Why are you interested in this role?": "I am interested in this role because it aligns with my skills and expertise in administrative field.",
+            "Years of Experience": "3 years",
+            "Highest Educational Level": "Senior High School Graduate",
+            "Recent Job Title": "Customer Support Representative",
+            "Which of the following skills do you have?": [
+              "Microsoft Office (Word, Excel, Outlook)",
+              "Google Workspace (Docs, Sheets, Gmail)",
+              "Calendar/scheduling tools (Calendly, Google Calendar)",
+              "Phone/email correspondence handling"
+            ],
+            "Availability to Start": "Within 1 week",
+            "Expected Salary": "20000",
+            "How did you hear about this position?": [
+              "Facebook"
+            ],
+            "Resume/CV Upload": [
+              "1OiamIjvC8QSHfJ7wmsh3No8j1zMwugBH"
+            ]
+          },
+          "webhookUrl": "https://syllabically-leverlike-dawn.ngrok-free.dev/webhook-test/appointment-form",
+          "executionMode": "test"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ],
+    "Basic LLM Chain": [
+      {
+        "json": {
+          "output": {
+            "applicantName": "John Daniel",
+            "score": 9,
+            "recommendationReason": "John Daniel has 3 years of experience and skills that match the requirements, including Microsoft Office, Google Workspace, and calendar/scheduling tools, making him a strong candidate for the Administrative Assistant role.",
+            "classification": "Strong Match",
+            "resumeLink": "https://drive.google.com/file/d/1OiamIjvC8QSHfJ7wmsh3No8j1zMwugBH/view"
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ],
+    "Edit Fields": [
+      {
+        "json": {
+          "body": {
+            "Resume/CV Upload": "https://drive.google.com/file/d/1OiamIjvC8QSHfJ7wmsh3No8j1zMwugBH/view",
+            "Full Name": "John Daniel",
+            "Email": "jd@gmail.com",
+            "Address (City, State, and Country)": "Bugo, Cagayan de Oro City",
+            "Position Applied For": "Administrative Assistant",
+            "Why are you interested in this role?": "I am interested in this role because it aligns with my skills and expertise in administrative field.",
+            "Years of Experience": "3 years",
+            "Recent Job Title": "Customer Support Representative",
+            "Highest Educational Level": "Senior High School Graduate",
+            "Availability to Start": "Within 1 week",
+            "Expected Salary": "20000",
+            "How did you hear about this position?": [
+              "Facebook"
+            ],
+            "Which of the following skills do you have?": [
+              "Microsoft Office (Word, Excel, Outlook)",
+              "Google Workspace (Docs, Sheets, Gmail)",
+              "Calendar/scheduling tools (Calendly, Google Calendar)",
+              "Phone/email correspondence handling"
+            ]
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ],
+    "Send Approval for Applicant": [
+      {
+        "json": {
+          "output": {
+            "applicantName": "John Daniel",
+            "score": 9,
+            "recommendationReason": "John Daniel has 3 years of experience and skills that match the requirements, including Microsoft Office, Google Workspace, and calendar/scheduling tools, making him a strong candidate for the Administrative Assistant role.",
+            "classification": "Strong Match",
+            "resumeLink": "https://drive.google.com/file/d/1OiamIjvC8QSHfJ7wmsh3No8j1zMwugBH/view"
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Wait for Form Submission": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Approval for Applicant": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if Applicant is Approved/Rejected/NoUpdate": {
+      "main": [
+        [
+          {
+            "node": "Send calendar link to applicant",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send rejection email to applicant",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send calendar link to applicant",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send rejection email to applicant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message to team for confirmation of appointment": {
+      "main": [
+        [
+          {
+            "node": "Update applicant row to Done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update applicant row to Done": {
+      "main": [
+        []
+      ]
+    },
+    "Send internal alert": {
+      "main": [
+        [
+          {
+            "node": "Send another approval message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send another approval message": {
+      "main": [
+        [
+          {
+            "node": "If no update after 48 hours",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get applicant details1": {
+      "main": [
+        [
+          {
+            "node": "Check if applicant is already processed1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if applicant is already processed1": {
+      "main": [
+        [
+          {
+            "node": "Check if Applicant is Approved/Rejected/NoUpdate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send calendar link to applicant": {
+      "main": [
+        [
+          {
+            "node": "Send message to team for confirmation of appointment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send rejection email to applicant": {
+      "main": [
+        [
+          {
+            "node": "Send message to team for confirmation of appointment",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update applicant row to Done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If no update after 48 hours": {
+      "main": [
+        [
+          {
+            "node": "Escalate to Higher Ups",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get applicant details1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Get applicant details1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get applicant details1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send internal alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Send Approval for Applicant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "c57c4db2-21b0-4c92-bd8e-db7d1968695c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "aa1c2d96509f51fe24482bec45395215d0b92b834a9e494b7a5fc06047c0a951"
+  },
+  "id": "Xd1vqeG3nYybZJqaGxqKm",
+  "tags": []
+}
